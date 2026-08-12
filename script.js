@@ -35,7 +35,7 @@ const state = {
   currentScreen: "intro",
   noAttempts: 0,
   accepted: false,
-  musicEnabled: false,
+  musicEnabled: true,
   dateRevealed: false,
   reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches
 };
