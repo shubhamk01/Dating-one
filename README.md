@@ -72,10 +72,10 @@ The content and behavior are separated from the interaction logic.
 4. The live site will be available at:
 
    ```
-   https://USERNAME.github.io/interactive-date-proposal/
+   https://shubhamk01.github.io/Dating-one/
    ```
 
-If you rename the repository, update the URL accordingly.
+If the repository name changes, update that URL accordingly.
 
 ## Mobile Testing
 
