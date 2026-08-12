@@ -55,17 +55,18 @@ button:focus-visible {
 .page-shell {
   position: relative;
   min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow: hidden;
 }
 
 .scene {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: var(--max-width);
   display: grid;
   place-items: center;
+  padding: 24px;
+  pointer-events: none;
 }
 
 .scene-card {
@@ -348,7 +349,7 @@ button:focus-visible {
 }
 
 .scene { opacity: 0; transform: translateY(16px); transition: opacity 420ms ease, transform 420ms ease; }
-.scene.active { opacity: 1; transform: translateY(0); }
+.scene.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
 .scene-card::before {
   content: '';

@@ -163,12 +163,13 @@ function updateScreen(name) {
   state.currentScreen = name;
   Object.keys(screens).forEach((screenKey) => {
     const screenEl = screens[screenKey];
+    screenEl.hidden = false;
     if (screenKey === name) {
-      screenEl.hidden = false;
       screenEl.classList.add('active');
+      screenEl.setAttribute('aria-hidden', 'false');
     } else {
       screenEl.classList.remove('active');
-      screenEl.hidden = true;
+      screenEl.setAttribute('aria-hidden', 'true');
     }
   });
 }
@@ -201,28 +202,29 @@ function updateNoMessage() {
 
 function getViewportFrame() {
   const margin = 18;
-  const width = document.documentElement.clientWidth;
-  const height = document.documentElement.clientHeight;
+  const frameRect = proposalScene.getBoundingClientRect();
   const hudHeight = hudBar ? hudBar.getBoundingClientRect().height + 30 : 0;
   return {
     minLeft: margin,
     minTop: margin,
-    maxLeft: width - margin,
-    maxTop: height - margin - hudHeight
+    maxLeft: frameRect.width - margin,
+    maxTop: frameRect.height - margin - hudHeight
   };
 }
 
 function moveNoButton() {
-  // On first move, break out of grid into full-viewport fixed positioning
+  // On first move, move NO into frame 2 layer so it stays inside this frame only.
   if (!noButton._isFixed) {
+    const sceneRect = proposalScene.getBoundingClientRect();
     const rect = noButton.getBoundingClientRect();
     noButton._isFixed = true;
-    noButton.style.position = 'fixed';
+    proposalScene.appendChild(noButton);
+    noButton.style.position = 'absolute';
     noButton.style.right = 'auto';
     noButton.style.bottom = 'auto';
     noButton.style.zIndex = '100';
-    noButton.style.left = `${rect.left}px`;
-    noButton.style.top = `${rect.top}px`;
+    noButton.style.left = `${rect.left - sceneRect.left}px`;
+    noButton.style.top = `${rect.top - sceneRect.top}px`;
     noButton.offsetHeight; // flush layout so transition starts from here
   }
 
