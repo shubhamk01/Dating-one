@@ -158,12 +158,33 @@ button:focus-visible {
 }
 
 .button-grid {
-  margin-top: 30px;
+  margin-top: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   position: relative;
   min-height: 280px;
+}
+
+.choice-frame {
+  margin-top: 30px;
+  position: relative;
+  min-height: 280px;
+  border-radius: 24px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.message-frame {
+  margin-top: 14px;
+  min-height: 56px;
+  border-radius: 16px;
+  padding: 10px 14px;
+  background: rgba(5, 8, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 4;
 }
 
 .btn-yes {
@@ -186,7 +207,8 @@ button:focus-visible {
 }
 
 .status-copy {
-  min-height: 42px;
+  min-height: 28px;
+  margin: 0;
 }
 
 .floating-layer {
@@ -325,6 +347,10 @@ button:focus-visible {
   .button-grid {
     gap: 14px;
     grid-template-columns: 1fr;
+    min-height: 220px;
+  }
+
+  .choice-frame {
     min-height: 220px;
   }
 

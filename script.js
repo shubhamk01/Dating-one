@@ -68,6 +68,7 @@ const confettiLayer = document.getElementById('confetti-layer');
 const particleLayer = document.getElementById('particle-layer');
 const hudBar = document.querySelector('.hud-bar');
 const proposalScene = document.querySelector('.scene-proposal');
+const choiceFrame = document.getElementById('choice-frame');
 const proposalGrid = document.getElementById('proposal-grid');
 const heartsHint = document.querySelector('.hint-text');
 
@@ -77,7 +78,7 @@ let lastTouchTapTime = 0;
 let lastTouchTapX = 0;
 let lastTouchTapY = 0;
 let baseProposalGridMinHeight = 0;
-let baseNoMessageMarginTop = 18;
+let baseChoiceFrameMinHeight = 0;
 let audioUnlockHandler = null;
 
 async function init() {
@@ -97,9 +98,9 @@ async function init() {
 
 function cacheLayoutMeasurements() {
   const gridMinHeight = parseFloat(getComputedStyle(proposalGrid).minHeight);
-  const noMessageMargin = parseFloat(getComputedStyle(noMessage).marginTop);
+  const choiceFrameMinHeight = parseFloat(getComputedStyle(choiceFrame).minHeight);
   baseProposalGridMinHeight = Number.isFinite(gridMinHeight) ? gridMinHeight : 220;
-  baseNoMessageMarginTop = Number.isFinite(noMessageMargin) ? noMessageMargin : 18;
+  baseChoiceFrameMinHeight = Number.isFinite(choiceFrameMinHeight) ? choiceFrameMinHeight : 220;
 }
 
 function updateHeartsHint() {
@@ -346,7 +347,7 @@ function growYesButton() {
   const grownHeight = yesButton.offsetHeight * scale;
   const extraHeight = Math.max(0, grownHeight - yesButton.offsetHeight);
   proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraHeight + 12)}px`;
-  noMessage.style.marginTop = `${Math.round(baseNoMessageMarginTop + Math.min(extraHeight, 64))}px`;
+  choiceFrame.style.minHeight = `${Math.round(baseChoiceFrameMinHeight + extraHeight + 12)}px`;
 }
 
 function handlePointerMove(event) {
