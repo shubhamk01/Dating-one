@@ -25,7 +25,7 @@ jobs:
           cp -R index.html style.css script.js README.md LICENSE assets public
 
       - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
