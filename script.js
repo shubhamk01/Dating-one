@@ -35,7 +35,7 @@ const state = {
   currentScreen: "intro",
   noAttempts: 0,
   accepted: false,
-  musicEnabled: true,
+  musicEnabled: CONFIG.music.enabled,
   dateRevealed: false,
   reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches
 };
@@ -116,8 +116,16 @@ function loadMusicPreference() {
   const stored = sessionStorage.getItem('proposalMusic');
   if (stored === 'on') {
     state.musicEnabled = true;
+  } else if (stored === 'off') {
+    state.musicEnabled = false;
+  }
+
+  if (state.musicEnabled) {
     musicToggle.textContent = '🔊 Music On';
     musicToggle.setAttribute('aria-pressed', 'true');
+  } else {
+    musicToggle.textContent = '🎵 Music Off';
+    musicToggle.setAttribute('aria-pressed', 'false');
   }
 }
 
