@@ -299,6 +299,7 @@ function moveNoButton() {
     noButton._isFixed = true;
     proposalScene.appendChild(noButton);
     noButton.style.position = 'absolute';
+    noButton.style.width = 'auto';
     noButton.style.right = 'auto';
     noButton.style.bottom = 'auto';
     noButton.style.zIndex = '100';
