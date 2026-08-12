@@ -155,7 +155,7 @@ function attachListeners() {
     }
   });
 
-  proposalScene.addEventListener('pointermove', handlePointerMove);
+  document.addEventListener('pointermove', handlePointerMove);
 }
 
 function updateScreen(name) {
@@ -199,26 +199,35 @@ function updateNoMessage() {
 }
 
 function moveNoButton() {
-  noButton.style.right = 'auto';
-  noButton.style.bottom = 'auto';
-  const sceneRect = proposalGrid.getBoundingClientRect();
-  const yesRect = yesButton.getBoundingClientRect();
+  // On first move, break out of grid into full-viewport fixed positioning
+  if (!noButton._isFixed) {
+    const rect = noButton.getBoundingClientRect();
+    noButton._isFixed = true;
+    noButton.style.position = 'fixed';
+    noButton.style.right = 'auto';
+    noButton.style.bottom = 'auto';
+    noButton.style.zIndex = '100';
+    noButton.style.left = `${rect.left}px`;
+    noButton.style.top = `${rect.top}px`;
+    noButton.offsetHeight; // flush layout so transition starts from here
+  }
+
   const noRect = noButton.getBoundingClientRect();
-  const margin = 18;
-  const maxLeft = sceneRect.width - noRect.width - margin;
-  const maxTop = sceneRect.height - noRect.height - margin;
-  const safeDistance = 140;
+  const yesRect = yesButton.getBoundingClientRect();
+  const margin = 24;
+  const maxLeft = window.innerWidth - noRect.width - margin;
+  const maxTop = window.innerHeight - noRect.height - margin;
+  const safeDistance = 160;
 
-  let newLeft = noButton.offsetLeft;
-  let newTop = noButton.offsetTop;
+  let newLeft = parseFloat(noButton.style.left) || 0;
+  let newTop = parseFloat(noButton.style.top) || 0;
 
-  for (let attempt = 0; attempt < 16; attempt += 1) {
+  for (let attempt = 0; attempt < 20; attempt++) {
     const candidateLeft = Math.round(margin + Math.random() * maxLeft);
     const candidateTop = Math.round(margin + Math.random() * maxTop);
-    const dx = candidateLeft - (yesRect.left - sceneRect.left);
-    const dy = candidateTop - (yesRect.top - sceneRect.top);
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance > safeDistance || attempt > 12) {
+    const dx = candidateLeft - (yesRect.left + yesRect.width / 2);
+    const dy = candidateTop - (yesRect.top + yesRect.height / 2);
+    if (Math.sqrt(dx * dx + dy * dy) > safeDistance || attempt > 15) {
       newLeft = candidateLeft;
       newTop = candidateTop;
       break;
@@ -230,13 +239,13 @@ function moveNoButton() {
 }
 
 function keepNoButtonVisible() {
-  const sceneRect = proposalGrid.getBoundingClientRect();
+  if (!noButton._isFixed) return;
   const noRect = noButton.getBoundingClientRect();
   const margin = 16;
-  const currentLeft = noButton.offsetLeft;
-  const currentTop = noButton.offsetTop;
-  const maxLeft = Math.max(0, sceneRect.width - noRect.width - margin);
-  const maxTop = Math.max(0, sceneRect.height - noRect.height - margin);
+  const maxLeft = window.innerWidth - noRect.width - margin;
+  const maxTop = window.innerHeight - noRect.height - margin;
+  const currentLeft = parseFloat(noButton.style.left) || 0;
+  const currentTop = parseFloat(noButton.style.top) || 0;
   noButton.style.left = `${Math.min(Math.max(currentLeft, margin), maxLeft)}px`;
   noButton.style.top = `${Math.min(Math.max(currentTop, margin), maxTop)}px`;
 }
