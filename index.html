@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Will you go on a date with me?</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="scene scene-intro active" data-screen="intro">
+      <div class="scene-card">
+        <div class="scene-icon" aria-hidden="true">💌</div>
+        <p class="scene-eyebrow">Hey you...</p>
+        <h1 class="scene-title" id="intro-title">I have something important to ask you.</h1>
+        <p class="scene-copy">Open your heart and tap continue when you're ready.</p>
+        <button class="btn btn-primary" id="continue-button">Continue ❤️</button>
+      </div>
+    </div>
+
+    <div class="scene scene-proposal" data-screen="proposal" hidden>
+      <div class="scene-card">
+        <div class="scene-header">
+          <span class="decorative-heart" id="decorative-heart" role="button" tabindex="0" aria-label="Make hearts glow">❤️</span>
+          <p class="scene-eyebrow">I have a question...</p>
+        </div>
+        <h1 class="scene-title" id="proposal-title">Will you go on a date with me?</h1>
+        <p class="scene-copy" id="proposal-copy">This is the best way I know how to ask.</p>
+        <div class="button-grid" id="proposal-grid">
+          <button class="btn btn-yes" id="yes-button">YES 🥰</button>
+          <button class="btn btn-no" id="no-button">NO 😏</button>
+        </div>
+        <p class="status-copy" aria-live="polite" id="no-message">Take your time...</p>
+      </div>
+    </div>
+
+    <div class="scene scene-success" data-screen="success" hidden>
+      <div class="scene-card success-card">
+        <div class="scene-icon" aria-hidden="true">🎉</div>
+        <p class="scene-eyebrow">YESSSSS! ❤️</p>
+        <h1 class="scene-title">I knew you would say yes.</h1>
+        <p class="scene-copy">You just made my day. Let's make our first date something unforgettable.</p>
+        <button class="btn btn-primary" id="reveal-date-button">Reveal our date ✨</button>
+      </div>
+    </div>
+
+    <div class="scene scene-reveal" data-screen="reveal" hidden>
+      <div class="scene-card reveal-card">
+        <p class="scene-eyebrow">Date officially unlocked.</p>
+        <h1 class="scene-title">Here are the details.</h1>
+        <div class="date-grid" id="date-details">
+          <div class="date-item"><span>📅</span><strong>Date</strong><span id="date-value"></span></div>
+          <div class="date-item"><span>⏰</span><strong>Time</strong><span id="time-value"></span></div>
+          <div class="date-item"><span>📍</span><strong>Place</strong><span id="location-value"></span></div>
+          <div class="date-item"><span>👗</span><strong>Dress code</strong><span id="dresscode-value"></span></div>
+        </div>
+        <p class="scene-copy final-copy">One more thing... I'm really looking forward to seeing you. ❤️</p>
+        <div class="final-actions">
+          <button class="btn btn-primary" id="final-button">Can't wait 🥰</button>
+          <button class="btn btn-secondary" id="share-button">Share ❤️</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="floating-layer" aria-hidden="true">
+      <div class="floating-heart heart-1">❤️</div>
+      <div class="floating-heart heart-2">💕</div>
+      <div class="floating-heart heart-3">💖</div>
+    </div>
+
+    <div class="hud-bar">
+      <button class="btn btn-icon" id="music-toggle" aria-pressed="false">🎵 Music Off</button>
+      <span class="hint-text">Press H for hearts</span>
+    </div>
+
+    <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+    <div class="particle-layer" id="particle-layer" aria-hidden="true"></div>
+  </div>
+
+  <audio id="bg-audio" preload="none" src="assets/audio/background.mp3" loop></audio>
+  <script src="script.js"></script>
+</body>
+</html>
