@@ -199,7 +199,7 @@ function updateNoMessage() {
 }
 
 function moveNoButton() {
-  const sceneRect = proposalScene.getBoundingClientRect();
+  const sceneRect = proposalGrid.getBoundingClientRect();
   const yesRect = yesButton.getBoundingClientRect();
   const noRect = noButton.getBoundingClientRect();
   const margin = 18;
@@ -228,7 +228,7 @@ function moveNoButton() {
 }
 
 function keepNoButtonVisible() {
-  const sceneRect = proposalScene.getBoundingClientRect();
+  const sceneRect = proposalGrid.getBoundingClientRect();
   const noRect = noButton.getBoundingClientRect();
   const margin = 16;
   const currentLeft = noButton.offsetLeft;

@@ -250,7 +250,7 @@ button:focus-visible {
   100% { transform: translateY(-120px) scale(0.8); opacity: 0; }
 }
 
-.scene.success-card {
+.success-card {
   text-align: center;
 }
 
