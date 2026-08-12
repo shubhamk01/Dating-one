@@ -182,7 +182,7 @@ function handleYes() {
 function handleNoClick() {
   state.noAttempts += 1;
   updateNoMessage();
-  if (state.noAttempts >= 2) {
+  if (state.noAttempts >= 1) {
     moveNoButton();
   }
   growYesButton();
@@ -199,6 +199,8 @@ function updateNoMessage() {
 }
 
 function moveNoButton() {
+  noButton.style.right = 'auto';
+  noButton.style.bottom = 'auto';
   const sceneRect = proposalGrid.getBoundingClientRect();
   const yesRect = yesButton.getBoundingClientRect();
   const noRect = noButton.getBoundingClientRect();
@@ -240,7 +242,7 @@ function keepNoButtonVisible() {
 }
 
 function growYesButton() {
-  const scale = 1 + Math.min(state.noAttempts, 4) * 0.05;
+  const scale = Math.min(1 + state.noAttempts * 0.2, 2.5);
   yesButton.style.transform = `scale(${scale})`;
 }
 
