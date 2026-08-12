@@ -170,6 +170,8 @@ button:focus-visible {
   background: linear-gradient(135deg, #ff9b9b, #ff639b);
   color: #fff;
   will-change: transform;
+  position: relative;
+  z-index: 2;
 }
 
 .btn-no {

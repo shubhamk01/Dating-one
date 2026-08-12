@@ -69,19 +69,76 @@ const particleLayer = document.getElementById('particle-layer');
 const hudBar = document.querySelector('.hud-bar');
 const proposalScene = document.querySelector('.scene-proposal');
 const proposalGrid = document.getElementById('proposal-grid');
+const heartsHint = document.querySelector('.hint-text');
 
 let lastHoverMove = 0;
 let heartsMode = 0;
+let lastTouchTapTime = 0;
+let lastTouchTapX = 0;
+let lastTouchTapY = 0;
+let baseProposalGridMinHeight = 0;
+let baseNoMessageMarginTop = 18;
+let audioUnlockHandler = null;
 
-function init() {
+async function init() {
   setPersonalization();
   renderProposalText();
   renderDateDetails();
+  await configureAudioSource();
   loadMusicPreference();
+  cacheLayoutMeasurements();
+  updateHeartsHint();
   attachListeners();
   updateScreen('intro');
   if (state.reducedMotion) {
     document.documentElement.classList.add('reduce-motion');
+  }
+}
+
+function cacheLayoutMeasurements() {
+  const gridMinHeight = parseFloat(getComputedStyle(proposalGrid).minHeight);
+  const noMessageMargin = parseFloat(getComputedStyle(noMessage).marginTop);
+  baseProposalGridMinHeight = Number.isFinite(gridMinHeight) ? gridMinHeight : 220;
+  baseNoMessageMarginTop = Number.isFinite(noMessageMargin) ? noMessageMargin : 18;
+}
+
+function updateHeartsHint() {
+  if (heartsHint) {
+    heartsHint.textContent = 'Press H or double tap for hearts';
+  }
+}
+
+async function configureAudioSource() {
+  const fallbackTracks = [CONFIG.music.source];
+  const tracks = await getAudioTracksFromManifest(fallbackTracks);
+  if (!tracks.length) {
+    return;
+  }
+
+  const selectedTrack = tracks[Math.floor(Math.random() * tracks.length)];
+  audioElement.src = encodeURI(selectedTrack);
+  audioElement.load();
+}
+
+async function getAudioTracksFromManifest(fallbackTracks) {
+  try {
+    const response = await fetch('assets/audio/tracks.json', { cache: 'no-store' });
+    if (!response.ok) {
+      return fallbackTracks;
+    }
+
+    const manifestTracks = await response.json();
+    if (!Array.isArray(manifestTracks)) {
+      return fallbackTracks;
+    }
+
+    const validTracks = manifestTracks
+      .map((track) => (typeof track === 'string' ? track.trim() : ''))
+      .filter((track) => /\.(mp3|wav|ogg|m4a|aac)$/i.test(track));
+
+    return validTracks.length ? validTracks : fallbackTracks;
+  } catch {
+    return fallbackTracks;
   }
 }
 
@@ -123,6 +180,8 @@ function loadMusicPreference() {
   if (state.musicEnabled) {
     musicToggle.textContent = '🔊 Music On';
     musicToggle.setAttribute('aria-pressed', 'true');
+    tryPlayAudio();
+    ensureAudioUnlockOnFirstGesture();
   } else {
     musicToggle.textContent = '🎵 Music Off';
     musicToggle.setAttribute('aria-pressed', 'false');
@@ -157,6 +216,8 @@ function attachListeners() {
       createFloatingHearts(18);
     }
   });
+
+  document.addEventListener('pointerup', handleDoubleTapForHearts, { passive: true });
 
   window.addEventListener('resize', () => {
     if (state.currentScreen === 'proposal') {
@@ -236,8 +297,11 @@ function moveNoButton() {
     noButton.offsetHeight; // flush layout so transition starts from here
   }
 
+  const sceneRect = proposalScene.getBoundingClientRect();
   const noRect = noButton.getBoundingClientRect();
   const yesRect = yesButton.getBoundingClientRect();
+  const yesCenterX = yesRect.left - sceneRect.left + yesRect.width / 2;
+  const yesCenterY = yesRect.top - sceneRect.top + yesRect.height / 2;
   const frame = getViewportFrame();
   const maxLeft = Math.max(frame.minLeft, frame.maxLeft - noRect.width);
   const maxTop = Math.max(frame.minTop, frame.maxTop - noRect.height);
@@ -249,8 +313,8 @@ function moveNoButton() {
   for (let attempt = 0; attempt < 20; attempt++) {
     const candidateLeft = Math.round(frame.minLeft + Math.random() * (maxLeft - frame.minLeft));
     const candidateTop = Math.round(frame.minTop + Math.random() * (maxTop - frame.minTop));
-    const dx = candidateLeft - (yesRect.left + yesRect.width / 2);
-    const dy = candidateTop - (yesRect.top + yesRect.height / 2);
+    const dx = candidateLeft - yesCenterX;
+    const dy = candidateTop - yesCenterY;
     if (Math.sqrt(dx * dx + dy * dy) > safeDistance || attempt > 15) {
       newLeft = candidateLeft;
       newTop = candidateTop;
@@ -275,8 +339,14 @@ function keepNoButtonVisible() {
 }
 
 function growYesButton() {
-  const scale = Math.min(1 + state.noAttempts * 0.2, 2.5);
+  const scale = Math.min(1 + state.noAttempts * 0.18, 2.2);
+  yesButton.style.transformOrigin = 'left center';
   yesButton.style.transform = `scale(${scale})`;
+
+  const grownHeight = yesButton.offsetHeight * scale;
+  const extraHeight = Math.max(0, grownHeight - yesButton.offsetHeight);
+  proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraHeight + 12)}px`;
+  noMessage.style.marginTop = `${Math.round(baseNoMessageMarginTop + Math.min(extraHeight, 64))}px`;
 }
 
 function handlePointerMove(event) {
@@ -331,8 +401,49 @@ function tryPlayAudio() {
   if (!state.musicEnabled) return;
   if (!audioElement.src) return;
   audioElement.play().catch(() => {
-    console.warn('Audio could not autoplay. User can toggle sound.');
+    ensureAudioUnlockOnFirstGesture();
   });
+}
+
+function ensureAudioUnlockOnFirstGesture() {
+  if (!state.musicEnabled) return;
+
+  if (audioUnlockHandler) {
+    document.removeEventListener('pointerdown', audioUnlockHandler);
+    document.removeEventListener('keydown', audioUnlockHandler);
+  }
+
+  audioUnlockHandler = () => {
+    if (state.musicEnabled) {
+      tryPlayAudio();
+    }
+    if (audioUnlockHandler) {
+      document.removeEventListener('pointerdown', audioUnlockHandler);
+      document.removeEventListener('keydown', audioUnlockHandler);
+      audioUnlockHandler = null;
+    }
+  };
+
+  document.addEventListener('pointerdown', audioUnlockHandler, { once: true });
+  document.addEventListener('keydown', audioUnlockHandler, { once: true });
+}
+
+function handleDoubleTapForHearts(event) {
+  if (event.pointerType !== 'touch') return;
+
+  const now = Date.now();
+  const withinTime = now - lastTouchTapTime <= 320;
+  const withinDistance = Math.abs(event.clientX - lastTouchTapX) <= 28 && Math.abs(event.clientY - lastTouchTapY) <= 28;
+
+  if (withinTime && withinDistance) {
+    createFloatingHearts(18);
+    lastTouchTapTime = 0;
+    return;
+  }
+
+  lastTouchTapTime = now;
+  lastTouchTapX = event.clientX;
+  lastTouchTapY = event.clientY;
 }
 
 function launchCelebration() {

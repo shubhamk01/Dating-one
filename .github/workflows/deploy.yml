@@ -25,6 +25,25 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Generate audio manifest
+        run: |
+          mkdir -p assets/audio
+          : > assets/audio/tracks.json
+          echo '[' >> assets/audio/tracks.json
+          first=1
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            escaped=$(printf '%s' "$file" | sed 's/\\/\\\\/g; s/"/\\"/g')
+            if [ "$first" -eq 1 ]; then
+              first=0
+            else
+              echo ',' >> assets/audio/tracks.json
+            fi
+            printf '  "%s"' "$escaped" >> assets/audio/tracks.json
+          done < <(find assets/audio -maxdepth 1 -type f \( -iname '*.mp3' -o -iname '*.wav' -o -iname '*.ogg' -o -iname '*.m4a' -o -iname '*.aac' \) | sort)
+          echo '' >> assets/audio/tracks.json
+          echo ']' >> assets/audio/tracks.json
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
