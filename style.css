@@ -30,12 +30,12 @@ html, body {
               radial-gradient(circle at 65% 15%, rgba(139, 108, 255, 0.12), transparent 26%),
               linear-gradient(180deg, #090b13 0%, #05070d 100%);
   color: var(--text);
-  overflow-x: hidden;
+  overflow: hidden;
   text-rendering: optimizeLegibility;
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
@@ -54,7 +54,7 @@ button:focus-visible {
 
 .page-shell {
   position: relative;
-  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   display: grid;
   place-items: center;
   padding: 24px;
