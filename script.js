@@ -66,7 +66,6 @@ const dresscodeValue = document.getElementById('dresscode-value');
 const audioElement = document.getElementById('bg-audio');
 const confettiLayer = document.getElementById('confetti-layer');
 const particleLayer = document.getElementById('particle-layer');
-const hudBar = document.querySelector('.hud-bar');
 const proposalScene = document.querySelector('.scene-proposal');
 const choiceFrame = document.getElementById('choice-frame');
 const proposalGrid = document.getElementById('proposal-grid');
@@ -79,6 +78,9 @@ let lastTouchTapX = 0;
 let lastTouchTapY = 0;
 let baseProposalGridMinHeight = 0;
 let baseChoiceFrameMinHeight = 0;
+let baseYesMinHeight = 56;
+let baseYesFontSize = 16;
+let baseYesPaddingX = 22;
 let audioUnlockHandler = null;
 
 async function init() {
@@ -97,10 +99,16 @@ async function init() {
 }
 
 function cacheLayoutMeasurements() {
-  const gridMinHeight = parseFloat(getComputedStyle(proposalGrid).minHeight);
-  const choiceFrameMinHeight = parseFloat(getComputedStyle(choiceFrame).minHeight);
+  const gridMinHeight = Number.parseFloat(getComputedStyle(proposalGrid).minHeight);
+  const choiceFrameMinHeight = Number.parseFloat(getComputedStyle(choiceFrame).minHeight);
+  const yesMinHeight = Number.parseFloat(getComputedStyle(yesButton).minHeight);
+  const yesFontSize = Number.parseFloat(getComputedStyle(yesButton).fontSize);
+  const yesPaddingX = Number.parseFloat(getComputedStyle(yesButton).paddingLeft);
   baseProposalGridMinHeight = Number.isFinite(gridMinHeight) ? gridMinHeight : 220;
   baseChoiceFrameMinHeight = Number.isFinite(choiceFrameMinHeight) ? choiceFrameMinHeight : 220;
+  baseYesMinHeight = Number.isFinite(yesMinHeight) ? yesMinHeight : 56;
+  baseYesFontSize = Number.isFinite(yesFontSize) ? yesFontSize : 16;
+  baseYesPaddingX = Number.isFinite(yesPaddingX) ? yesPaddingX : 22;
 }
 
 function updateHeartsHint() {
@@ -233,11 +241,12 @@ function updateScreen(name) {
   state.currentScreen = name;
   Object.keys(screens).forEach((screenKey) => {
     const screenEl = screens[screenKey];
-    screenEl.hidden = false;
     if (screenKey === name) {
+      screenEl.hidden = false;
       screenEl.classList.add('active');
       screenEl.setAttribute('aria-hidden', 'false');
     } else {
+      screenEl.hidden = true;
       screenEl.classList.remove('active');
       screenEl.setAttribute('aria-hidden', 'true');
     }
@@ -272,13 +281,13 @@ function updateNoMessage() {
 
 function getViewportFrame() {
   const margin = 18;
-  const frameRect = proposalScene.getBoundingClientRect();
-  const hudHeight = hudBar ? hudBar.getBoundingClientRect().height + 30 : 0;
+  const sceneRect = proposalScene.getBoundingClientRect();
+  const choiceRect = choiceFrame.getBoundingClientRect();
   return {
-    minLeft: margin,
-    minTop: margin,
-    maxLeft: frameRect.width - margin,
-    maxTop: frameRect.height - margin - hudHeight
+    minLeft: choiceRect.left - sceneRect.left + margin,
+    minTop: choiceRect.top - sceneRect.top + margin,
+    maxLeft: choiceRect.right - sceneRect.left - margin,
+    maxTop: choiceRect.bottom - sceneRect.top - margin
   };
 }
 
@@ -308,15 +317,15 @@ function moveNoButton() {
   const maxTop = Math.max(frame.minTop, frame.maxTop - noRect.height);
   const safeDistance = 160;
 
-  let newLeft = parseFloat(noButton.style.left) || 0;
-  let newTop = parseFloat(noButton.style.top) || 0;
+  let newLeft = Number.parseFloat(noButton.style.left) || 0;
+  let newTop = Number.parseFloat(noButton.style.top) || 0;
 
   for (let attempt = 0; attempt < 20; attempt++) {
     const candidateLeft = Math.round(frame.minLeft + Math.random() * (maxLeft - frame.minLeft));
     const candidateTop = Math.round(frame.minTop + Math.random() * (maxTop - frame.minTop));
     const dx = candidateLeft - yesCenterX;
     const dy = candidateTop - yesCenterY;
-    if (Math.sqrt(dx * dx + dy * dy) > safeDistance || attempt > 15) {
+    if (Math.hypot(dx, dy) > safeDistance || attempt > 15) {
       newLeft = candidateLeft;
       newTop = candidateTop;
       break;
@@ -333,27 +342,31 @@ function keepNoButtonVisible() {
   const frame = getViewportFrame();
   const maxLeft = Math.max(frame.minLeft, frame.maxLeft - noRect.width);
   const maxTop = Math.max(frame.minTop, frame.maxTop - noRect.height);
-  const currentLeft = parseFloat(noButton.style.left) || 0;
-  const currentTop = parseFloat(noButton.style.top) || 0;
+  const currentLeft = Number.parseFloat(noButton.style.left) || 0;
+  const currentTop = Number.parseFloat(noButton.style.top) || 0;
   noButton.style.left = `${Math.min(Math.max(currentLeft, frame.minLeft), maxLeft)}px`;
   noButton.style.top = `${Math.min(Math.max(currentTop, frame.minTop), maxTop)}px`;
 }
 
 function growYesButton() {
   const isMobile = window.matchMedia('(max-width: 640px)').matches;
-  const growthStep = isMobile ? 0.08 : 0.14;
-  const cap = isMobile ? 1.42 : 1.9;
-  const desiredScale = 1 + state.noAttempts * growthStep;
-  const maxByWidth = proposalGrid.clientWidth > 0 ? (proposalGrid.clientWidth * 0.9) / yesButton.offsetWidth : cap;
-  const scale = Math.max(1, Math.min(desiredScale, cap, maxByWidth));
-  yesButton.style.transformOrigin = 'left center';
-  yesButton.style.transform = `scale(${scale})`;
+  const maxMinHeight = isMobile ? 94 : 128;
+  const maxFontSize = isMobile ? 23 : 29;
+  const maxPaddingX = isMobile ? 40 : 56;
 
-  const grownHeight = yesButton.offsetHeight * scale;
-  const extraHeight = Math.max(0, grownHeight - yesButton.offsetHeight);
-  const extraSpace = isMobile ? Math.min(extraHeight, 34) : Math.min(extraHeight, 88);
-  proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraSpace + 12)}px`;
-  choiceFrame.style.minHeight = `${Math.round(baseChoiceFrameMinHeight + extraSpace + 12)}px`;
+  const nextMinHeight = Math.min(baseYesMinHeight + state.noAttempts * (isMobile ? 5 : 7), maxMinHeight);
+  const nextFontSize = Math.min(baseYesFontSize + state.noAttempts * (isMobile ? 0.55 : 0.7), maxFontSize);
+  const nextPaddingX = Math.min(baseYesPaddingX + state.noAttempts * (isMobile ? 2.2 : 3), maxPaddingX);
+
+  yesButton.style.transform = 'none';
+  yesButton.style.minHeight = `${Math.round(nextMinHeight)}px`;
+  yesButton.style.fontSize = `${nextFontSize.toFixed(2)}px`;
+  yesButton.style.paddingLeft = `${nextPaddingX.toFixed(2)}px`;
+  yesButton.style.paddingRight = `${nextPaddingX.toFixed(2)}px`;
+
+  const extraHeight = Math.max(0, nextMinHeight - baseYesMinHeight);
+  proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraHeight + 16)}px`;
+  choiceFrame.style.minHeight = `${Math.round(baseChoiceFrameMinHeight + extraHeight + 16)}px`;
 }
 
 function handlePointerMove(event) {
@@ -362,7 +375,7 @@ function handlePointerMove(event) {
   const rect = noButton.getBoundingClientRect();
   const dx = rect.left + rect.width / 2 - event.clientX;
   const dy = rect.top + rect.height / 2 - event.clientY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
+  const distance = Math.hypot(dx, dy);
   if (distance < 120 && Date.now() - lastHoverMove > 700) {
     lastHoverMove = Date.now();
     const moveIntent = Math.min(4, state.noAttempts + 1);
