@@ -340,14 +340,20 @@ function keepNoButtonVisible() {
 }
 
 function growYesButton() {
-  const scale = Math.min(1 + state.noAttempts * 0.18, 2.2);
+  const isMobile = window.matchMedia('(max-width: 640px)').matches;
+  const growthStep = isMobile ? 0.08 : 0.14;
+  const cap = isMobile ? 1.42 : 1.9;
+  const desiredScale = 1 + state.noAttempts * growthStep;
+  const maxByWidth = proposalGrid.clientWidth > 0 ? (proposalGrid.clientWidth * 0.9) / yesButton.offsetWidth : cap;
+  const scale = Math.max(1, Math.min(desiredScale, cap, maxByWidth));
   yesButton.style.transformOrigin = 'left center';
   yesButton.style.transform = `scale(${scale})`;
 
   const grownHeight = yesButton.offsetHeight * scale;
   const extraHeight = Math.max(0, grownHeight - yesButton.offsetHeight);
-  proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraHeight + 12)}px`;
-  choiceFrame.style.minHeight = `${Math.round(baseChoiceFrameMinHeight + extraHeight + 12)}px`;
+  const extraSpace = isMobile ? Math.min(extraHeight, 34) : Math.min(extraHeight, 88);
+  proposalGrid.style.minHeight = `${Math.round(baseProposalGridMinHeight + extraSpace + 12)}px`;
+  choiceFrame.style.minHeight = `${Math.round(baseChoiceFrameMinHeight + extraSpace + 12)}px`;
 }
 
 function handlePointerMove(event) {
