@@ -66,6 +66,7 @@ const dresscodeValue = document.getElementById('dresscode-value');
 const audioElement = document.getElementById('bg-audio');
 const confettiLayer = document.getElementById('confetti-layer');
 const particleLayer = document.getElementById('particle-layer');
+const hudBar = document.querySelector('.hud-bar');
 const proposalScene = document.querySelector('.scene-proposal');
 const proposalGrid = document.getElementById('proposal-grid');
 
@@ -155,19 +156,20 @@ function attachListeners() {
     }
   });
 
-  proposalScene.addEventListener('pointermove', handlePointerMove);
+  document.addEventListener('pointermove', handlePointerMove);
 }
 
 function updateScreen(name) {
   state.currentScreen = name;
   Object.keys(screens).forEach((screenKey) => {
     const screenEl = screens[screenKey];
+    screenEl.hidden = false;
     if (screenKey === name) {
-      screenEl.hidden = false;
       screenEl.classList.add('active');
+      screenEl.setAttribute('aria-hidden', 'false');
     } else {
       screenEl.classList.remove('active');
-      screenEl.hidden = true;
+      screenEl.setAttribute('aria-hidden', 'true');
     }
   });
 }
@@ -182,7 +184,7 @@ function handleYes() {
 function handleNoClick() {
   state.noAttempts += 1;
   updateNoMessage();
-  if (state.noAttempts >= 2) {
+  if (state.noAttempts >= 1) {
     moveNoButton();
   }
   growYesButton();
@@ -198,49 +200,74 @@ function updateNoMessage() {
   noMessage.textContent = CONFIG.noMessages[index] || CONFIG.noMessages[CONFIG.noMessages.length - 1];
 }
 
-function moveNoButton() {
-  const sceneRect = proposalScene.getBoundingClientRect();
-  const yesRect = yesButton.getBoundingClientRect();
-  const noRect = noButton.getBoundingClientRect();
+function getViewportFrame() {
   const margin = 18;
-  const maxLeft = sceneRect.width - noRect.width - margin;
-  const maxTop = sceneRect.height - noRect.height - margin;
-  const safeDistance = 140;
+  const frameRect = proposalScene.getBoundingClientRect();
+  const hudHeight = hudBar ? hudBar.getBoundingClientRect().height + 30 : 0;
+  return {
+    minLeft: margin,
+    minTop: margin,
+    maxLeft: frameRect.width - margin,
+    maxTop: frameRect.height - margin - hudHeight
+  };
+}
 
-  let newLeft = noButton.offsetLeft;
-  let newTop = noButton.offsetTop;
+function moveNoButton() {
+  // On first move, move NO into frame 2 layer so it stays inside this frame only.
+  if (!noButton._isFixed) {
+    const sceneRect = proposalScene.getBoundingClientRect();
+    const rect = noButton.getBoundingClientRect();
+    noButton._isFixed = true;
+    proposalScene.appendChild(noButton);
+    noButton.style.position = 'absolute';
+    noButton.style.right = 'auto';
+    noButton.style.bottom = 'auto';
+    noButton.style.zIndex = '100';
+    noButton.style.left = `${rect.left - sceneRect.left}px`;
+    noButton.style.top = `${rect.top - sceneRect.top}px`;
+    noButton.offsetHeight; // flush layout so transition starts from here
+  }
 
-  for (let attempt = 0; attempt < 16; attempt += 1) {
-    const candidateLeft = Math.round(margin + Math.random() * maxLeft);
-    const candidateTop = Math.round(margin + Math.random() * maxTop);
-    const dx = candidateLeft - (yesRect.left - sceneRect.left);
-    const dy = candidateTop - (yesRect.top - sceneRect.top);
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance > safeDistance || attempt > 12) {
+  const noRect = noButton.getBoundingClientRect();
+  const yesRect = yesButton.getBoundingClientRect();
+  const frame = getViewportFrame();
+  const maxLeft = Math.max(frame.minLeft, frame.maxLeft - noRect.width);
+  const maxTop = Math.max(frame.minTop, frame.maxTop - noRect.height);
+  const safeDistance = 160;
+
+  let newLeft = parseFloat(noButton.style.left) || 0;
+  let newTop = parseFloat(noButton.style.top) || 0;
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const candidateLeft = Math.round(frame.minLeft + Math.random() * (maxLeft - frame.minLeft));
+    const candidateTop = Math.round(frame.minTop + Math.random() * (maxTop - frame.minTop));
+    const dx = candidateLeft - (yesRect.left + yesRect.width / 2);
+    const dy = candidateTop - (yesRect.top + yesRect.height / 2);
+    if (Math.sqrt(dx * dx + dy * dy) > safeDistance || attempt > 15) {
       newLeft = candidateLeft;
       newTop = candidateTop;
       break;
     }
   }
 
-  noButton.style.left = `${Math.max(margin, Math.min(newLeft, maxLeft))}px`;
-  noButton.style.top = `${Math.max(margin, Math.min(newTop, maxTop))}px`;
+  noButton.style.left = `${Math.max(frame.minLeft, Math.min(newLeft, maxLeft))}px`;
+  noButton.style.top = `${Math.max(frame.minTop, Math.min(newTop, maxTop))}px`;
 }
 
 function keepNoButtonVisible() {
-  const sceneRect = proposalScene.getBoundingClientRect();
+  if (!noButton._isFixed) return;
   const noRect = noButton.getBoundingClientRect();
-  const margin = 16;
-  const currentLeft = noButton.offsetLeft;
-  const currentTop = noButton.offsetTop;
-  const maxLeft = Math.max(0, sceneRect.width - noRect.width - margin);
-  const maxTop = Math.max(0, sceneRect.height - noRect.height - margin);
-  noButton.style.left = `${Math.min(Math.max(currentLeft, margin), maxLeft)}px`;
-  noButton.style.top = `${Math.min(Math.max(currentTop, margin), maxTop)}px`;
+  const frame = getViewportFrame();
+  const maxLeft = Math.max(frame.minLeft, frame.maxLeft - noRect.width);
+  const maxTop = Math.max(frame.minTop, frame.maxTop - noRect.height);
+  const currentLeft = parseFloat(noButton.style.left) || 0;
+  const currentTop = parseFloat(noButton.style.top) || 0;
+  noButton.style.left = `${Math.min(Math.max(currentLeft, frame.minLeft), maxLeft)}px`;
+  noButton.style.top = `${Math.min(Math.max(currentTop, frame.minTop), maxTop)}px`;
 }
 
 function growYesButton() {
-  const scale = 1 + Math.min(state.noAttempts, 4) * 0.05;
+  const scale = Math.min(1 + state.noAttempts * 0.2, 2.5);
   yesButton.style.transform = `scale(${scale})`;
 }
 
