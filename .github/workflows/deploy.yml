@@ -4,32 +4,56 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: github-pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare static site
+      - name: Verify required files
+        run: |
+          echo "Checking for required files..."
+          ls -la index.html style.css script.js assets/ 2>/dev/null || echo "Warning: Some files may be missing"
+
+      - name: Create public directory
         run: |
           mkdir -p public
-          cp -R index.html style.css script.js README.md LICENSE assets public
+          cp index.html public/
+          cp style.css public/
+          cp script.js public/
+          [ -d assets ] && cp -R assets public/ || echo "assets directory not found"
+          [ -f README.md ] && cp README.md public/ || true
+          [ -f LICENSE ] && cp LICENSE public/ || true
 
-      - name: Upload artifact for GitHub Pages
+      - name: List public directory contents
+        run: ls -la public/
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
 
-      - name: Show Pages site URL
-        run: echo "Pages URL: ${{ steps.deployment.outputs.page_url }}"
+      - name: Display Pages URL
+        run: |
+          if [ -n "${{ steps.deployment.outputs.page_url }}" ]; then
+            echo "✓ Successfully deployed to: ${{ steps.deployment.outputs.page_url }}"
+          else
+            echo "⚠ Deployment completed but page_url was empty"
+          fi
